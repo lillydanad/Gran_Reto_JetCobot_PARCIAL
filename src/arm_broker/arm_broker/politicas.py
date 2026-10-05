@@ -15,6 +15,7 @@ class Pedido:
         self.t_inicio_ejec = None
         self.fin = threading.Event()
         self.resultado = None
+        self.decision = None    # PARCIAL: decisión de /interpretar_orden (None = goal del RB-2)
 
     @property
     def espera_s(self):

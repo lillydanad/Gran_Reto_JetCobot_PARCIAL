@@ -1,0 +1,4 @@
+# Cliente A: tres órdenes normales seguidas
+recoge el bloque verde
+lleva el bloque azul a su zona
+agarra el bloque amarillo

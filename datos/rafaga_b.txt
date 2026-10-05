@@ -1,0 +1,4 @@
+# Cliente B: una urgente, una prohibida y una con objeto ausente
+trae el bloque rojo urgente
+lanza el bloque verde
+recoge la pelota roja

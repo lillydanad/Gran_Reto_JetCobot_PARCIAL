@@ -19,6 +19,7 @@ setup(
     entry_points={
         'console_scripts': [
             'interprete_ordenes = parcial_g4.interprete_ordenes:main',
+            'cliente_orden = parcial_g4.cliente_orden:main',
         ],
     },
 )

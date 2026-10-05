@@ -1,13 +1,22 @@
-# priority: 0..255, MAYOR = MAS URGENTE
-float64[] joint_positions
+# Goal ------------------------------------------------------------------
+float64[] joint_positions   # RB-2: objetivo articular en rad. Vacío cuando se usa 'frase'
 string client_id
-uint8 priority
+uint8 priority              # RB-2: 0..255, MAYOR = MAS URGENTE. Con 'frase' se IGNORA: decide el modelo
+string frase                # Parcial: orden en lenguaje natural (P2 y P3)
 ---
+# Result ----------------------------------------------------------------
 bool success
 string message
 float64 wait_time_s
 float64 exec_time_s
+string accion               # decisión con la que se ejecutó (Parcial)
+string objeto
+string color
+uint8 prioridad_modelo
+bool degradada
+float64 error_mm            # P2: error solicitado vs alcanzado con la FK del RB-2; -1 si no aplica
 ---
+# Feedback --------------------------------------------------------------
 string state
 int32 queue_position
 float64 elapsed_s

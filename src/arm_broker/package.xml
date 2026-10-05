@@ -9,6 +9,8 @@
   <depend>rclpy</depend>
   <depend>sensor_msgs</depend>
   <depend>arm_broker_interfaces</depend>
+  <depend>std_msgs</depend>
+  <exec_depend>parcial_g4</exec_depend>
 
   <export>
     <build_type>ament_python</build_type>
