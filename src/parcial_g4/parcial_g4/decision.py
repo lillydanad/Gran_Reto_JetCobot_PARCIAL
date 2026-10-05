@@ -77,8 +77,11 @@ def preguntas_laya():
         'prioridad': {
             'type': 'score',
             'instructions': '¿Qué tan urgente es la orden?',
-            'criteria': ['sin apuro, cuando se pueda', 'normal',
-                         'urgente, inmediato, rápido'],
+            'criteria': ['baja: dice que no hay apuro, como "cuando puedas", '
+                         '"no es urgente", "con calma", "sin prisa"',
+                         'normal: no dice nada sobre la urgencia',
+                         'alta: dice que es urgente, como "urgente", "ya", '
+                         '"rápido", "ahora mismo", "al toque", "inmediatamente"'],
         },
         'seguridad': {
             'type': 'choice',
@@ -149,6 +152,7 @@ VERBOS_RECOGER = [
     r'\bmov\w*', r'\bpon\b', r'\bponl\w*', r'\bpong\w*', r'\bcoloc\w*',
     r'\bdeposit\w*', r'\bentreg\w*', r'\bdame\b', r'\bpasame\b', r'\bclasific\w*',
     r'\bubic\w*', r'\bsepar\w*', r'\bguard\w*', r'\balcanz\w*', r'\bsac\w*',
+    r'\bnecesit\w*', r'\bquier\w*', r'\bpasa(me|lo|la)\b',
 ]
 VOLVER = [r'\bhome\b', r'\breposo\b', r'posicion (inicial|de inicio|cero|de reposo)',
           r'\b(vuelv|volv|regres|retorn)\w*']
@@ -254,6 +258,7 @@ def clasificar_palabras_clave(frase):
     if motivos and accion == 'recoger' and _hay(t, PROHIBIDO['pide lanzar o tirar el objeto']
                                                  + PROHIBIDO['pide golpear o romper']):
         accion = 'ninguna'                  # lanzar/golpear no es "recoger"
+        evidencia['accion'] = True          # la frase SÍ nombra la acción (prohibida)
 
     if accion == 'detener':
         prioridad = PRIORIDAD_ALTA          # una parada siempre va primero
