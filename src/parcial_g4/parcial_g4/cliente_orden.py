@@ -98,7 +98,8 @@ def main(args=None):
     nodo = ClienteOrden()
     ejecutor = MultiThreadedExecutor(num_threads=4)
     ejecutor.add_node(nodo)
-    threading.Thread(target=ejecutor.spin, daemon=True).start()
+    hilo = threading.Thread(target=ejecutor.spin, daemon=True)
+    hilo.start()
 
     print(f'[{nodo.client_id}] esperando al broker...', flush=True)
     if not nodo.cli.wait_for_server(timeout_sec=15.0):
@@ -132,6 +133,8 @@ def main(args=None):
     except (KeyboardInterrupt, EOFError):
         pass
     finally:
+        ejecutor.shutdown()          # detener el hilo de ROS antes de destruir el nodo
+        hilo.join(timeout=2.0)
         nodo.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()

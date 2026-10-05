@@ -33,8 +33,10 @@ from arm_broker import fk
 GRUPO, PUNTA = 'arm_group', '6_Link'
 MARCOS = ('world', 'base_link', 'dummy')
 VELOCIDAD_MAXIMA = 50              # regla del curso
-SUBIDA_M = 0.06                    # pre-agarre: 6 cm sobre el bloque
-TOLERANCIA_LLEGADA_DEG = 2.5
+SUBIDAS_M = (0.06, 0.04, 0.025)    # pre-agarre: se prueba 6 cm sobre el bloque, luego 4 y 2,5
+TOLERANCIA_LLEGADA_DEG = 3.0
+TRAMOS_ESTRICTOS = ('sobre el bloque', 'agarre')   # sin llegar aquí, NO se cierra la pinza
+FRACCION_PREAGARRE = 0.3   # pre-agarre articular: 30 % del camino de vuelta a la observación
 DRIVERS_PROHIBIDOS = ('sync_plan', 'mycobot_receiver', 'control_sync_plan')
 CAMPOS_CSV = ['fecha', 'client_id', 'frase', 'color', 'posicion', 'pixel', 'via',
               'q_pedido_deg', 'q_real_deg', 'pos_pedida_mm', 'pos_alcanzada_mm', 'error_mm',
@@ -83,6 +85,10 @@ class PickPlace:
         time.sleep(0.5)
         self.mc.power_on()
         time.sleep(0.5)
+        try:
+            self.mc.set_fresh_mode(1)        # cada comando nuevo reemplaza al anterior (como sync_plan_nx)
+        except Exception:                    # noqa: BLE001
+            pass
 
         g = ReentrantCallbackGroup()
         self.cli_fk = nodo.create_client(GetPositionFK, '/compute_fk', callback_group=g)
@@ -151,12 +157,14 @@ class PickPlace:
         req.ik_request.pose_stamped = PoseStamped()
         req.ik_request.pose_stamped.header.frame_id = self.marco
         req.ik_request.pose_stamped.pose = pose
-        req.ik_request.timeout = Duration(sec=1)
+        req.ik_request.timeout = Duration(sec=0, nanosec=300_000_000)
         r = self._llamar(self.cli_ik, req)
-        if r is None or r.error_code.val != 1:
-            return None
+        if r is None:
+            return None, 'sin respuesta'
+        if r.error_code.val != 1:
+            return None, r.error_code.val
         mapa = dict(zip(r.solution.joint_state.name, r.solution.joint_state.position))
-        return [mapa[j] for j in fk.JOINT_NAMES]
+        return [mapa[j] for j in fk.JOINT_NAMES], 1
 
     def _plan(self, desde, hasta):
         req = GetMotionPlan.Request()
@@ -192,8 +200,17 @@ class PickPlace:
         t['plan_s'] += time.time() - t0
         if tramo is None:
             self.log.warn(f'{etiqueta}: MoveIt no planificó; voy directo con send_angles')
-            t['via'] = 'directo'
+            t['via'] += f'+{etiqueta.replace(" ", "_")}_directo'
             tramo = [(0.0, desde), (2.0, objetivo)]
+        else:
+            recorte = max(abs(math.degrees(a - b)) for a, b in zip(tramo[-1][1], objetivo))
+            if recorte > 1.0:
+                # MoveIt deja la trayectoria en el límite de SU modelo (URDF), más estrecho que el
+                # brazo real. Se usa su trayectoria hasta ahí y el último tramo va directo.
+                self.log.warn(f'{etiqueta}: MoveIt recortó la trayectoria {recorte:.0f}° por los '
+                              'límites de su modelo; el tramo final va directo')
+                t['via'] += f'+{etiqueta.replace(" ", "_")}_final_directo'
+                tramo = tramo + [(tramo[-1][0] + 1.5, list(objetivo))]
         t0 = time.time()
         ultimo_t, ultimo = -1.0, None
         for ts, q in tramo:                              # 1 punto cada ~0,5 s + el final
@@ -206,18 +223,36 @@ class PickPlace:
             time.sleep(max(0.15, ts - ultimo_t if ultimo_t >= 0 else 0.15))
             self._publicar_real()
             ultimo_t, ultimo = ts, q
-        self._esperar_llegada(ultimo, etiqueta)
+        q, llego, falta = self._esperar_llegada(objetivo, etiqueta)   # se compara con lo PEDIDO
         t['ejecucion_s'] += time.time() - t0
+        if not llego:
+            if etiqueta in TRAMOS_ESTRICTOS or etiqueta.startswith('deposito'):
+                raise FalloOrden(f'{etiqueta}: el brazo no llegó (quedó a {falta:.0f}° del objetivo)')
+            self.log.warn(f'{etiqueta}: quedó a {falta:.0f}° del objetivo; sigo')
 
-    def _esperar_llegada(self, objetivo, etiqueta, tope=12.0):
-        fin = time.time() + tope
+    def _esperar_llegada(self, objetivo, etiqueta):
+        """Espera a que el brazo llegue. El tope crece con lo que falta recorrer; si se
+        detiene antes de llegar, reenvía el objetivo una vez. Devuelve (q, llegó, grados que faltan)."""
+        def falta(q):
+            return max(abs(math.degrees(a - b)) for a, b in zip(q, objetivo))
+        q = self._publicar_real()
+        fin = time.time() + 6.0 + 0.3 * falta(q)          # 120° por recorrer -> ~42 s de tope
+        reenviado, ultimo_avance, previo = False, time.time(), q
         while time.time() < fin:
-            q = self._publicar_real()
-            if max(abs(math.degrees(a - b)) for a, b in zip(q, objetivo)) < TOLERANCIA_LLEGADA_DEG:
-                return q
+            if falta(q) < TOLERANCIA_LLEGADA_DEG:
+                return q, True, falta(q)
+            if max(abs(math.degrees(a - b)) for a, b in zip(q, previo)) > 0.3:
+                ultimo_avance, previo = time.time(), q
+            elif time.time() - ultimo_avance > 2.5:        # se quedó quieto sin llegar
+                if reenviado:
+                    break
+                self.log.warn(f'{etiqueta}: se detuvo a {falta(q):.0f}°; reenvío el objetivo')
+                self.mc.send_angles(_deg(objetivo), self.vel)
+                reenviado, ultimo_avance = True, time.time()
             time.sleep(0.2)
-        self.log.warn(f'{etiqueta}: no llegó a menos de {TOLERANCIA_LLEGADA_DEG}° en {tope:.0f} s')
-        return q
+            q = self._publicar_real()
+        self.log.warn(f'{etiqueta}: no llegó a menos de {TOLERANCIA_LLEGADA_DEG}° (faltan {falta(q):.0f}°)')
+        return q, False, falta(q)
 
     def pinza(self, abierta):
         self.mc.set_gripper_value(100 if abierta else 10, 30)
@@ -290,16 +325,33 @@ class PickPlace:
             pose_agarre = self._fk_pose(q_ensenado)
             if pose_agarre is None:
                 raise FalloOrden('MoveIt no respondió a /compute_fk (¿está corriendo move_group?)')
-            pose_arriba = type(pose_agarre)()
-            pose_arriba.position.x = pose_agarre.position.x
-            pose_arriba.position.y = pose_agarre.position.y
-            pose_arriba.position.z = pose_agarre.position.z + SUBIDA_M
-            pose_arriba.orientation = pose_agarre.orientation
-            q_agarre = self._ik(pose_agarre, q_ensenado)
-            q_arriba = self._ik(pose_arriba, q_ensenado)
+            q_agarre, cod = self._ik(pose_agarre, q_ensenado)
+            if q_agarre is None:
+                self.log.warn(f'IK del agarre falló (código {cod}); uso los ángulos enseñados')
+                q_agarre, t['via'] = q_ensenado, t['via'] + '+agarre_ensenado'
+            q_arriba = None
+            for subida in SUBIDAS_M:
+                pose_arriba = type(pose_agarre)()
+                pose_arriba.position.x = pose_agarre.position.x
+                pose_arriba.position.y = pose_agarre.position.y
+                pose_arriba.position.z = pose_agarre.position.z + subida
+                pose_arriba.orientation = pose_agarre.orientation
+                for semilla in (q_agarre, self.puntos['observacion'], self.puntos['home']):
+                    q, cod = self._ik(pose_arriba, semilla)
+                    if q is not None and fk.dentro_de_limites(q)[0]:
+                        q_arriba = q
+                        break
+                if q_arriba is not None:
+                    if subida != SUBIDAS_M[0]:
+                        t['via'] += f'+preagarre_{subida * 100:.1f}cm'
+                    break
+            if q_arriba is None:
+                obs = self.puntos['observacion']
+                q_arriba = [g + FRACCION_PREAGARRE * (o - g) for g, o in zip(q_agarre, obs)]
+                self.log.warn(f'sin IK para el pre-agarre (último código {cod}); uso un '
+                              f'pre-agarre articular ({FRACCION_PREAGARRE:.0%} hacia la observación)')
+                t['via'] += '+preagarre_articular'
             t['ik_s'] = time.time() - t0
-            if q_agarre is None or q_arriba is None:
-                raise FalloOrden('MoveIt no encontró solución de IK para el agarre')
 
             # 3-5. Plan + ejecución de cada tramo
             self._feedback(gh, 'AGARRE')
