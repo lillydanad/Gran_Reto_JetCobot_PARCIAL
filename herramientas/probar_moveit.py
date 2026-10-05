@@ -36,8 +36,11 @@ POSES = [
     ('pose2', [45, 20, 0, 0, 90, 0], [-60.1, -80.4, 392.6, -90.43, -20.73, 45.25]),
     ('pose3', [20, 20, 0, 20, 40, -20], [-78.1, -61.6, 403.3, -47.72, -42.21, -52.79]),
 ]
-CODIGOS = {1: 'SUCCESS', -1: 'FAILURE', -2: 'PLANNING_FAILED', -4: 'CONTROL_FAILED',
-           -10: 'START_STATE_IN_COLLISION', -12: 'GOAL_IN_COLLISION', -31: 'NO_IK_SOLUTION'}
+CODIGOS = {1: 'SUCCESS', 99999: 'FAILURE', -1: 'PLANNING_FAILED', -2: 'INVALID_MOTION_PLAN',
+           -6: 'TIMED_OUT', -10: 'START_STATE_IN_COLLISION', -12: 'GOAL_IN_COLLISION',
+           -15: 'INVALID_GROUP_NAME', -17: 'INVALID_ROBOT_STATE', -18: 'INVALID_LINK_NAME',
+           -21: 'FRAME_TRANSFORM_FAILURE', -31: 'NO_IK_SOLUTION'}
+MARCOS = ['world', 'base_link', 'dummy']   # se prueban en orden; se usa el primero que funcione
 
 
 def rad(v):
@@ -92,22 +95,22 @@ class Probador(Node):
         rclpy.spin_until_future_complete(self, fut, timeout_sec=10.0)
         return fut.result()
 
-    def fk_moveit(self, q_rad):
+    def fk_moveit(self, q_rad, marco=BASE):
         req = GetPositionFK.Request()
-        req.header.frame_id = BASE
+        req.header.frame_id = marco
         req.fk_link_names = [PUNTA, PINZA]
         req.robot_state = estado(q_rad)
         r = self.llamar(self.fk, req)
         return {n: p.pose for n, p in zip(r.fk_link_names, r.pose_stamped)}, r.error_code.val
 
-    def ik_moveit(self, pose, semilla_rad):
+    def ik_moveit(self, pose, semilla_rad, marco=BASE):
         req = GetPositionIK.Request()
         req.ik_request.group_name = GRUPO
         req.ik_request.robot_state = estado(semilla_rad)
         req.ik_request.avoid_collisions = False
         req.ik_request.ik_link_name = PUNTA
         req.ik_request.pose_stamped = PoseStamped()
-        req.ik_request.pose_stamped.header.frame_id = BASE
+        req.ik_request.pose_stamped.header.frame_id = marco
         req.ik_request.pose_stamped.pose = pose
         req.ik_request.timeout = Duration(sec=1)
         r = self.llamar(self.ik, req)
@@ -136,13 +139,23 @@ def main():
     rclpy.init()
     n = Probador()
 
+    marco = BASE
+    print('0. Marco de referencia que acepta MoveIt:')
+    for m in MARCOS:
+        _, cod = n.fk_moveit(rad(POSES[0][1]), m)
+        print(f'   {m:10} FK -> {CODIGOS.get(cod, cod)}')
+        if cod == 1:
+            marco = m
+            break
+    print(f'   se usa: {marco}\n')
+
     print('=' * 92)
     print('1. FK: MoveIt (URDF) vs firmware (medido en el RB-2) vs nuestra FK (DH)   [mm y °]')
     print('=' * 92)
     pose1_moveit = None
     for nombre, q_deg, firmware in POSES:
         q = rad(q_deg)
-        poses, cod = n.fk_moveit(q)
+        poses, cod = n.fk_moveit(q, marco)
         dh = fk_rb2.fk(q)
         print(f'\n{nombre}  q = {q_deg} °   (FK MoveIt: {CODIGOS.get(cod, cod)})')
         print(f'  firmware   pos {fmt(firmware[:3])}   rx,ry,rz {fmt(firmware[3:], 2)}')
@@ -162,11 +175,17 @@ def main():
     print('\n' + '=' * 92)
     print('2. IK: ángulos que MoveIt propone para llegar a la pose 1 (semilla = ceros)')
     print('=' * 92)
-    q_ik, cod = n.ik_moveit(pose1_moveit, [0.0] * 6)
+    q_ik, cod = n.ik_moveit(pose1_moveit, [0.0] * 6, marco)
+    if cod != 1:   # segundo intento con una semilla cercana (como hará el worker con la pose actual)
+        q_ik, cod = n.ik_moveit(pose1_moveit, rad(POSE_HOME_DEG), marco)
     print(f'  resultado: {CODIGOS.get(cod, cod)}')
     print(f'  original  {fmt(POSES[0][1])} °')
     print(f'  MoveIt IK {fmt(deg(q_ik))} °')
     if cod == 1:
+        p_sol, _ = n.fk_moveit(q_ik, marco)
+        a, b = p_sol[PUNTA].position, pose1_moveit.position
+        print(f'  FK(MoveIt) de la solución vs pose pedida: '
+              f'{math.dist((a.x, a.y, a.z), (b.x, b.y, b.z)) * 1000:.2f} mm')
         print(f'  FK(DH) de la solución {fmt(fk_rb2.fk(q_ik))} mm '
               f'vs FK(DH) del original {fmt(fk_rb2.fk(rad(POSES[0][1])))} mm')
 
