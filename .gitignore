@@ -4,3 +4,11 @@ log/
 *.env
 __pycache__/
 *.bag
+
+build/
+install/
+log/
+.env
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
