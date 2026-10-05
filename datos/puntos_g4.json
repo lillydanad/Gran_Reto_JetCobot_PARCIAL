@@ -221,7 +221,7 @@
       "color_en_calibracion": "amarillo"
     }
   },
-  "actualizado": "2026-10-05T01:07:44",
+  "actualizado": "2026-10-05T01:08:35",
   "camara": {
     "resolucion": [
       320,
@@ -229,20 +229,20 @@
     ],
     "centros": {
       "rojo": [
-        307,
-        219
+        301,
+        213
       ],
       "amarillo": [
-        298,
-        41
+        293,
+        47
       ],
       "verde": [
-        39,
-        67
+        44,
+        66
       ],
       "azul": [
         52,
-        229
+        231
       ]
     }
   }

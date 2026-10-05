@@ -1,0 +1,3 @@
+fecha,client_id,frase,color,posicion,pixel,via,q_pedido_deg,q_real_deg,pos_pedida_mm,pos_alcanzada_mm,error_mm,espera_cola_s,percepcion_s,ik_s,plan_s,ejecucion_s,total_s,resultado,detalle,exito_visual
+2026-10-05T01:15:32,cielo,trae el bloque rojo,rojo,pos_rojo,"[303, 213]",moveit,,,,,-1,0.01,8.04,1.03,0.03,2.07,12.03,fallo,MoveIt no encontró solución de IK para el agarre,
+2026-10-05T01:16:37,cielo,trae el bloque rojo,rojo,pos_rojo,"[299, 195]",moveit,,,,,-1,0.01,8.03,1.02,0.02,2.06,12.0,fallo,MoveIt no encontró solución de IK para el agarre,

@@ -45,6 +45,11 @@ class ArmBroker(Node):
         # Parcial
         self.declare_parameter('tiempo_interprete_s', 2.5)  # tope para esperar a /interpretar_orden
         self.declare_parameter('simular', True)             # True = no mueve el brazo (Paso 7)
+        self.declare_parameter('puntos_archivo', '~/parcial_ws_G4/datos/puntos_g4.json')
+        self.declare_parameter('registro_intentos', '~/parcial_ws_G4/evidencias/p2_intentos.csv')
+        self.declare_parameter('puerto', '/dev/ttyUSB0')
+        self.declare_parameter('velocidad', 30)             # se recorta a 50 como máximo
+        self.declare_parameter('zona_deposito', '')         # '' = deposito_<color>; o un punto fijo
 
         nombre = self.get_parameter('politica').value
         if nombre not in POLITICAS:
@@ -79,6 +84,17 @@ class ArmBroker(Node):
         self.cli_interprete = self.create_client(InterpretarOrden, '/interpretar_orden',
                                                  callback_group=self.grupo_entrada)
         self.decisiones = {}    # id(goal_request) -> decisión, de goal_callback a handle_accepted
+
+        # PARCIAL: modo real. El worker abre el brazo y es su único dueño.
+        self.pp = None
+        if not self.get_parameter('simular').value:
+            from arm_broker.pick_place import PickPlace
+            self.pp = PickPlace(self,
+                                self.get_parameter('puntos_archivo').value,
+                                self.get_parameter('puerto').value,
+                                self.get_parameter('velocidad').value,
+                                self.get_parameter('registro_intentos').value,
+                                self.get_parameter('zona_deposito').value)
 
         self.servidor = ActionServer(
             self,
@@ -165,10 +181,20 @@ class ArmBroker(Node):
         respuesta.degradada = bool(d['degradada'])
         respuesta.error_mm = -1.0
         t0 = time.time()
-        if not self.get_parameter('simular').value:
-            goal_handle.abort()
-            respuesta.success = False
-            respuesta.message = 'pick and place real todavía no implementado (Paso 8)'
+        if self.pp is not None:                              # modo real (Paso 8)
+            estado, mensaje, error_mm = self.pp.ejecutar(goal_handle, tarea)
+            if estado == 'ok':
+                goal_handle.succeed()
+            elif estado == 'cancelado':
+                goal_handle.canceled()
+            else:
+                goal_handle.abort()
+            respuesta.success = estado == 'ok'
+            respuesta.message = mensaje
+            respuesta.error_mm = float(error_mm)
+            respuesta.wait_time_s = tarea.espera_s
+            respuesta.exec_time_s = time.time() - t0
+            self.get_logger().info(f'ORDEN {estado.upper()} para {tarea.client_id}: {mensaje}')
             return respuesta
         retraso = self.duracion / self.pasos
         for _ in range(self.pasos):
@@ -197,6 +223,9 @@ class ArmBroker(Node):
         usuario = goal_request.client_id or 'Desconocido'
         if goal_request.frase.strip():                       # PARCIAL: orden en lenguaje natural
             return self._goal_con_frase(goal_request, usuario)
+        if self.pp is not None:                               # en modo real solo órdenes con frase
+            return self._rechazar(usuario, '(goal articular del RB-2)',
+                                  'en modo real solo se aceptan órdenes con frase')
         angulos_solicitados = list(goal_request.joint_positions)
 
         # 1. Chequeo de límites articulares
