@@ -103,9 +103,15 @@ def decision_desde_laya(respuesta):
     """
     ans = respuesta.get('answers', respuesta) if isinstance(respuesta, dict) else {}
 
+    confianza = {}
+
     def elegido(campo, validos, defecto):
         a = ans.get(campo)
         v = a.get('choice') if isinstance(a, dict) else a
+        try:
+            confianza[campo] = float(a.get('answer_confidence', 0.0)) if isinstance(a, dict) else 0.0
+        except (TypeError, ValueError):
+            confianza[campo] = 0.0
         return v if v in validos else defecto
 
     accion = elegido('accion', ACCIONES, 'ninguna')
@@ -126,6 +132,7 @@ def decision_desde_laya(respuesta):
         'accion': accion, 'objeto': objeto, 'color': color,
         'prioridad': prioridad, 'permitido': seguro == 'A',
         'motivo': '' if seguro == 'A' else 'LAYA la clasificó como peligrosa',
+        '_confianza': confianza,
     }
 
 
@@ -209,6 +216,7 @@ def clasificar_palabras_clave(frase):
     """Clasificador de respaldo. Devuelve una decisión con los mismos campos."""
     t = normalizar(frase)
 
+    evidencia = {'accion': True, 'objeto': True, 'color': True}
     color = 'ninguno'
     posiciones = [(m.start(), c) for c, p in COLOR_PATRON.items()
                   for m in [re.search(p, t)] if m]
@@ -216,6 +224,8 @@ def clasificar_palabras_clave(frase):
         color = min(posiciones)[1]          # el primer color mencionado
     elif _hay(t, OTROS_COLORES):
         color = 'otro'
+    else:
+        evidencia['color'] = False
 
     if _hay(t, OBJETO_OTRO):
         objeto = 'otro'
@@ -223,6 +233,7 @@ def clasificar_palabras_clave(frase):
         objeto = 'bloque'                   # "trae el rojo" = un bloque rojo
     else:
         objeto = 'ninguno'
+        evidencia['objeto'] = False
 
     if _negada(t):
         accion = 'ninguna'
@@ -234,8 +245,10 @@ def clasificar_palabras_clave(frase):
         accion = 'volver_inicio'
     elif color != 'ninguno' or objeto == 'bloque':
         accion = 'recoger'                  # "el azul, rápido" sin verbo
+        evidencia['accion'] = False         # deducida, no dicha
     else:
         accion = 'ninguna'
+        evidencia['accion'] = False
 
     motivos = [m for m, pats in PROHIBIDO.items() if _hay(t, pats)]
     if motivos and accion == 'recoger' and _hay(t, PROHIBIDO['pide lanzar o tirar el objeto']
@@ -255,22 +268,39 @@ def clasificar_palabras_clave(frase):
         'accion': accion, 'objeto': objeto, 'color': color,
         'prioridad': prioridad, 'permitido': not motivos,
         'motivo': '; '.join(motivos),
+        '_evidencia': evidencia,
     }
 
 
-def fusionar(laya, pc):
-    """Decisión final cuando LAYA sí respondió.
+CONFIANZA_MINIMA_LAYA = 0.80
 
-    - accion, objeto, color y prioridad: los decide LAYA (la prioridad DEBE venir
-      del modelo, lo exige la Pregunta 2).
-    - permitido: lo decide el clasificador por palabras clave. Medido con
-      comparar_seguridad.py: la pregunta de seguridad de LAYA acertó entre 42 % y
-      69 % y rechazó órdenes normales como "recoge el bloque rojo"; las palabras
-      clave acertaron 26/26. En un robot, la seguridad no se deja al azar.
+
+def fusionar(laya, pc):
+    """Decisión final cuando LAYA sí respondió. Regla: la evidencia explícita gana.
+
+    Medido con medir_p1.py (26 frases, en calma): LAYA acertó accion 54 %, objeto
+    62 %, color 88 %, permitido 46 %; las palabras clave, 96-100 %. Por eso:
+    - accion, objeto, color: si la frase NOMBRA el dato (la palabra está escrita),
+      se usa la palabra. Si no lo nombra, decide LAYA, pero solo con confianza
+      >= CONFIANZA_MINIMA_LAYA; si duda, queda el valor neutro ("ninguno").
+      Así una frase como "cuéntame un chiste" nunca se convierte en un movimiento.
+    - prioridad: SIEMPRE LAYA. La Pregunta 2 exige que la prioridad venga del modelo.
+    - permitido: palabras clave (la pregunta de seguridad de LAYA fue casi azar).
     """
     d = dict(laya)
+    evidencia = pc.get('_evidencia', {})
+    confianza = laya.get('_confianza', {})
+    fuentes = {'prioridad': 'laya', 'permitido': 'palabras_clave'}
+    for campo in ('accion', 'objeto', 'color'):
+        if evidencia.get(campo):
+            d[campo], fuentes[campo] = pc[campo], 'palabras_clave'
+        elif confianza.get(campo, 0.0) >= CONFIANZA_MINIMA_LAYA:
+            fuentes[campo] = 'laya'
+        else:
+            d[campo], fuentes[campo] = pc[campo], 'palabras_clave (LAYA dudó)'
     d['permitido'] = pc['permitido']
     d['motivo'] = pc['motivo']
+    d['_fuentes'] = fuentes
     return d
 
 

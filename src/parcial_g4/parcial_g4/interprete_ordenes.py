@@ -124,6 +124,7 @@ class InterpreteOrdenes(Node):
         respuesta.tiempo_red_ms = tiempo_red
         respuesta.tiempo_servidor_estimado = estimado
         respuesta.detalle = json.dumps({'laya': laya_cruda, 'palabras_clave': pc,
+                                        'fuentes': decision.get('_fuentes'),
                                         'causa_degradada': causa}, ensure_ascii=False)
         respuesta.tiempo_total_ms = (time.perf_counter() - t0) * 1000.0
 

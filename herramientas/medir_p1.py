@@ -72,7 +72,7 @@ def main():
     rclpy.init()
     nodo = Node('medidor_p1')
     cli = nodo.create_client(InterpretarOrden, '/interpretar_orden')
-    ejecutor = MultiThreadedExecutor(num_threads=4)
+    ejecutor = MultiThreadedExecutor(num_threads=max(4, 2 * args.paralelo))
     ejecutor.add_node(nodo)
     threading.Thread(target=ejecutor.spin, daemon=True).start()
     if not cli.wait_for_service(timeout_sec=10.0):
