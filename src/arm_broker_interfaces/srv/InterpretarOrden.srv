@@ -14,4 +14,7 @@ bool degradada             # true = LAYA no respondió a tiempo y decidió el cl
 string metodo              # laya | palabras_clave
 float64 tiempo_total_ms    # dentro del nodo: desde que llega la frase hasta la respuesta
 float64 tiempo_laya_ms     # ida y vuelta HTTP a LAYA (red + cálculo); -1 si no respondió
-float64 tiempo_servidor_ms # cálculo informado por el servidor; -1 si no lo informa
+float64 tiempo_servidor_ms # cálculo del servidor (informado o estimado, ver abajo); -1 si no hay dato
+float64 tiempo_red_ms      # ida y vuelta a /health del servidor (solo red, sin modelo); -1 si no hay
+bool tiempo_servidor_estimado  # true = tiempo_servidor_ms se calculó como tiempo_laya_ms - tiempo_red_ms
+string detalle             # JSON con la decisión cruda de cada método (para medir exactitud)

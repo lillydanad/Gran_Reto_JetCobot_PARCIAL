@@ -13,6 +13,7 @@ decisión tipada (accion, objeto, color, prioridad, permitido).
 
 import json
 import time
+import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as TiempoAgotado
@@ -41,7 +42,7 @@ class InterpreteOrdenes(Node):
         self.declare_parameter('preset', '')     # lo entrega el docente; vacío = no se envía
 
         # Hilos para las consultas HTTP: permiten cortar la espera a tiempo exacto.
-        self.hilos_http = ThreadPoolExecutor(max_workers=8)
+        self.hilos_http = ThreadPoolExecutor(max_workers=32)
         # Reentrant: atiende varias frases a la vez (4 clientes + broker en paralelo).
         self.create_service(InterpretarOrden, '/interpretar_orden', self.atender,
                             callback_group=ReentrantCallbackGroup())
@@ -65,17 +66,29 @@ class InterpreteOrdenes(Node):
             resp = json.loads(r.read())
         return resp, (time.perf_counter() - t0) * 1000.0
 
+    def _medir_red(self, limite):
+        """Ida y vuelta a /health: no usa el modelo, así que es (casi) solo red."""
+        u = urllib.parse.urlsplit(self.p('url_laya'))
+        t0 = time.perf_counter()
+        with urllib.request.urlopen(f'{u.scheme}://{u.netloc}/health', timeout=limite + 1.0) as r:
+            r.read()
+        return (time.perf_counter() - t0) * 1000.0
+
     def atender(self, peticion, respuesta):
         t0 = time.perf_counter()
         frase = peticion.frase.strip()
         limite = float(self.p('tiempo_limite_s'))
         pc = clasificar_palabras_clave(frase)      # instantáneo: siempre listo como respaldo
 
-        tiempo_laya, tiempo_servidor, causa = -1.0, -1.0, ''
+        tiempo_laya, tiempo_servidor, tiempo_red, estimado = -1.0, -1.0, -1.0, False
+        causa, laya_cruda = '', None
+        # La medición de red va EN PARALELO a la consulta: no agrega espera.
+        fut_red = self.hilos_http.submit(self._medir_red, limite)
         try:
             resp, tiempo_laya = self.hilos_http.submit(
                 self._consultar_laya, frase, limite).result(timeout=limite)
-            decision = fusionar(decision_desde_laya(resp), pc)
+            laya_cruda = decision_desde_laya(resp)
+            decision = fusionar(laya_cruda, pc)
             for clave in CLAVES_TIEMPO_SERVIDOR:
                 if clave in resp:
                     tiempo_servidor = float(resp[clave])
@@ -83,6 +96,15 @@ class InterpreteOrdenes(Node):
             causa = f'LAYA no respondió en {limite:.2f} s'
         except Exception as e:                      # red caída, JSON inválido, HTTP 4xx/5xx...
             causa = f'LAYA falló ({type(e).__name__})'
+
+        try:
+            restante = limite - (time.perf_counter() - t0)   # nunca pasarse del límite
+            tiempo_red = fut_red.result(timeout=0.01 if causa else max(0.01, restante))
+        except Exception:
+            tiempo_red = -1.0
+        if tiempo_servidor < 0 and tiempo_laya >= 0 and tiempo_red >= 0:
+            tiempo_servidor = max(0.0, tiempo_laya - tiempo_red)
+            estimado = True
 
         degradada = bool(causa)
         if degradada:
@@ -99,6 +121,10 @@ class InterpreteOrdenes(Node):
         respuesta.metodo = 'palabras_clave' if degradada else 'laya'
         respuesta.tiempo_laya_ms = tiempo_laya
         respuesta.tiempo_servidor_ms = tiempo_servidor
+        respuesta.tiempo_red_ms = tiempo_red
+        respuesta.tiempo_servidor_estimado = estimado
+        respuesta.detalle = json.dumps({'laya': laya_cruda, 'palabras_clave': pc,
+                                        'causa_degradada': causa}, ensure_ascii=False)
         respuesta.tiempo_total_ms = (time.perf_counter() - t0) * 1000.0
 
         self.get_logger().info(
@@ -116,7 +142,7 @@ class InterpreteOrdenes(Node):
 def main(args=None):
     rclpy.init(args=args)
     nodo = InterpreteOrdenes()
-    ejecutor = MultiThreadedExecutor()
+    ejecutor = MultiThreadedExecutor(num_threads=16)   # hasta 16 frases a la vez
     ejecutor.add_node(nodo)
     try:
         ejecutor.spin()
