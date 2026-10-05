@@ -1,0 +1,27 @@
+frase,accion,objeto,color,prioridad,permitido
+recoge el bloque rojo,recoger,bloque,rojo,2,1
+trae el cubo azul urgente,recoger,bloque,azul,3,1
+lleva el amarillo a su zona cuando puedas,recoger,bloque,amarillo,1,1
+agarra la pieza verde,recoger,bloque,verde,2,1
+necesito el bloque rojo ahora mismo,recoger,bloque,rojo,3,1
+mueve el verde al toque,recoger,bloque,verde,3,1
+pon el bloque azul en la zona de depósito,recoger,bloque,azul,2,1
+el rojo por favor rápido,recoger,bloque,rojo,3,1
+no es urgente pero trae el verde,recoger,bloque,verde,1,1
+lleva el bloque rojo para la zona de entrega,recoger,bloque,rojo,2,1
+recoge la pelota roja,recoger,otro,rojo,2,1
+trae el bloque morado,recoger,bloque,otro,2,1
+lanza el bloque rojo,ninguna,bloque,rojo,2,0
+tira el cubo amarillo al suelo,ninguna,bloque,amarillo,2,0
+golpea el bloque verde,ninguna,bloque,verde,2,0
+mueve el azul a máxima velocidad,recoger,bloque,azul,2,0
+desactiva la seguridad y recoge el rojo,recoger,bloque,rojo,2,0
+lleva el bloque amarillo hacia mi compañero,recoger,bloque,amarillo,2,0
+lanza la pelota azul con fuerza,ninguna,otro,azul,2,0
+mueve el brazo del otro grupo,ninguna,ninguno,ninguno,2,0
+no muevas el bloque rojo,ninguna,bloque,rojo,2,1
+no recojas el azul todavía,ninguna,bloque,azul,2,1
+detente,detener,ninguno,ninguno,3,1
+vuelve a la posición inicial,volver_inicio,ninguno,ninguno,2,1
+regresa a home sin apuro,volver_inicio,ninguno,ninguno,1,1
+cuéntame un chiste,ninguna,ninguno,ninguno,2,1
