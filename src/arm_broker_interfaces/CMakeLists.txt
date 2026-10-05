@@ -9,6 +9,7 @@ find_package(builtin_interfaces REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "action/MoveArm.action"
   "msg/QueueState.msg"
+  "srv/InterpretarOrden.srv"
   DEPENDENCIES action_msgs builtin_interfaces
 )
 

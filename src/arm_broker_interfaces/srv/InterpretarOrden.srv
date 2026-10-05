@@ -1,0 +1,17 @@
+# Servicio /interpretar_orden — Pregunta 1 del parcial (Grupo 4)
+# Petición: una frase en español
+string frase
+string client_id
+---
+# Decisión tipada (vocabulario cerrado)
+string accion              # recoger | volver_inicio | detener | ninguna
+string objeto              # bloque | otro | ninguno
+string color               # rojo | verde | azul | amarillo | otro | ninguno
+uint8 prioridad            # 1 baja, 2 normal, 3 alta (mayor = más urgente, igual que MoveArm)
+bool permitido             # false = orden prohibida
+string motivo              # vacío = se puede encolar; si no, la causa del rechazo
+bool degradada             # true = LAYA no respondió a tiempo y decidió el clasificador propio
+string metodo              # laya | palabras_clave
+float64 tiempo_total_ms    # dentro del nodo: desde que llega la frase hasta la respuesta
+float64 tiempo_laya_ms     # ida y vuelta HTTP a LAYA (red + cálculo); -1 si no respondió
+float64 tiempo_servidor_ms # cálculo informado por el servidor; -1 si no lo informa

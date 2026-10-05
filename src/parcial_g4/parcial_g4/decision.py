@@ -258,6 +258,22 @@ def clasificar_palabras_clave(frase):
     }
 
 
+def fusionar(laya, pc):
+    """Decisión final cuando LAYA sí respondió.
+
+    - accion, objeto, color y prioridad: los decide LAYA (la prioridad DEBE venir
+      del modelo, lo exige la Pregunta 2).
+    - permitido: lo decide el clasificador por palabras clave. Medido con
+      comparar_seguridad.py: la pregunta de seguridad de LAYA acertó entre 42 % y
+      69 % y rechazó órdenes normales como "recoge el bloque rojo"; las palabras
+      clave acertaron 26/26. En un robot, la seguridad no se deja al azar.
+    """
+    d = dict(laya)
+    d['permitido'] = pc['permitido']
+    d['motivo'] = pc['motivo']
+    return d
+
+
 def motivo_rechazo(d):
     """Por qué el broker NO debe encolar esta decisión ('' = se puede encolar).
 
