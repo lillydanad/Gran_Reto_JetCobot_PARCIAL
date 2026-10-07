@@ -1,0 +1,4 @@
+trae el bloque rojo
+trae el bloque verde
+trae el bloque azul
+trae el bloque amarillo
