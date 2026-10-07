@@ -298,7 +298,6 @@ def main():
         # 3. Posiciones de agarre, con el teclado
         if not args.solo_camara and not elegidos:
             centros = datos.get('camara', {}).get('centros', {})
-            datos['posiciones'] = {}       # se vuelven a enseñar todas (descarta intentos anteriores)
             for color in COLORES:
                 if not preguntar(f'¿Enseño la posición donde está ahora el bloque {color.upper()}?'):
                     continue
