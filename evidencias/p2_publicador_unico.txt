@@ -1,0 +1,7 @@
+Publisher count: 1
+Node name: arm_broker
+Node namespace: /
+Node name: rosbag2_recorder
+Node namespace: /
+Node name: move_group_private_187650784512768
+Node namespace: /
