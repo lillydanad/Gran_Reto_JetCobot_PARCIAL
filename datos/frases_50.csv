@@ -1,0 +1,51 @@
+frase,accion,objeto,color,prioridad,permitido
+trae el bloque rojo,recoger,bloque,rojo,2,1
+por favor agarra el cubo verde,recoger,bloque,verde,2,1
+llévame el bloque azul a su zona,recoger,bloque,azul,2,1
+recoge la pieza amarilla,recoger,bloque,amarillo,2,1
+mueve el bloque verde a su lugar,recoger,bloque,verde,2,1
+pásame el rojo,recoger,bloque,rojo,2,1
+consígueme el bloque amarillo,recoger,bloque,amarillo,2,1
+acércame el cubo azul,recoger,bloque,azul,2,1
+quiero el bloque verde,recoger,bloque,verde,2,1
+coloca el bloque rojo en el depósito,recoger,bloque,rojo,2,1
+toma el amarillo y déjalo en su zona,recoger,bloque,amarillo,2,1
+lleva el azul,recoger,bloque,azul,2,1
+necesito que traigas la ficha roja,recoger,bloque,rojo,2,1
+ordena el bloque verde en su sitio,recoger,bloque,verde,2,1
+sácame el cubo amarillo de ahí,recoger,bloque,amarillo,2,1
+"el bloque azul, porfa",recoger,bloque,azul,2,1
+levanta el bloque rojo y llévalo a su zona,recoger,bloque,rojo,2,1
+jala el bloque verde hacia su depósito,recoger,bloque,verde,2,1
+trae el bloque rojo urgente,recoger,bloque,rojo,3,1
+"rápido, el cubo azul",recoger,bloque,azul,3,1
+necesito el amarillo ya mismo,recoger,bloque,amarillo,3,1
+llévate el verde al toque,recoger,bloque,verde,3,1
+de inmediato recoge el bloque azul,recoger,bloque,azul,3,1
+apúrate con la pieza roja,recoger,bloque,rojo,3,1
+"es urgente, mueve el bloque amarillo",recoger,bloque,amarillo,3,1
+trae volando el bloque verde,recoger,bloque,verde,3,1
+"cuando puedas, trae el bloque azul",recoger,bloque,azul,1,1
+"sin prisa, recoge el rojo",recoger,bloque,rojo,1,1
+con calma lleva el cubo amarillo,recoger,bloque,amarillo,1,1
+"no hay apuro, agarra el verde",recoger,bloque,verde,1,1
+más tarde mueve el bloque azul,recoger,bloque,azul,1,1
+lanza el bloque rojo lejos,ninguna,bloque,rojo,2,0
+tira el cubo verde al piso,ninguna,bloque,verde,2,0
+golpea la pieza azul contra la mesa,ninguna,bloque,azul,2,0
+mueve el amarillo a máxima velocidad,recoger,bloque,amarillo,2,0
+lleva el bloque rojo hacia la cara de mi compañero,recoger,bloque,rojo,2,0
+desactiva los límites y agarra el verde,recoger,bloque,verde,2,0
+avienta el bloque azul,ninguna,bloque,azul,2,0
+trae la pelota roja,recoger,otro,rojo,2,1
+recoge la botella azul,recoger,otro,azul,2,1
+agarra el bloque morado,recoger,bloque,otro,2,1
+trae el cubo negro,recoger,bloque,otro,2,1
+no muevas el bloque verde,ninguna,bloque,verde,2,1
+no toques el rojo,ninguna,bloque,rojo,2,1
+por ahora no recojas el amarillo,ninguna,bloque,amarillo,2,1
+para ya,detener,ninguno,ninguno,3,1
+detente inmediatamente,detener,ninguno,ninguno,3,1
+vuelve a la posición de inicio,volver_inicio,ninguno,ninguno,2,1
+dime qué hora es,ninguna,ninguno,ninguno,2,1
+"hola, ¿cómo estás?",ninguna,ninguno,ninguno,2,1
