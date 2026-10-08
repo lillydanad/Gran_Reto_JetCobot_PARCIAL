@@ -15,6 +15,7 @@ string color
 uint8 prioridad_modelo
 bool degradada
 float64 error_mm            # P2: error solicitado vs alcanzado con la FK del RB-2; -1 si no aplica
+string tiempos_json         # P3: segundos por etapa (decisión, cola, percepción, IK, plan) e inicio del movimiento
 ---
 # Feedback --------------------------------------------------------------
 string state

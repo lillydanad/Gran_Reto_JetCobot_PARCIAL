@@ -212,6 +212,7 @@ class PickPlace:
                 t['via'] += f'+{etiqueta.replace(" ", "_")}_final_directo'
                 tramo = tramo + [(tramo[-1][0] + 1.5, list(objetivo))]
         t0 = time.time()
+        self._t_inicio_ejecucion = t0                    # cuándo empieza a moverse este tramo
         ultimo_t, ultimo = -1.0, None
         for ts, q in tramo:                              # 1 punto cada ~0,5 s + el final
             if ts - ultimo_t < 0.5 and q is not tramo[-1][1]:
@@ -286,7 +287,9 @@ class PickPlace:
 
     # ------------------------------------------------------------- orden completa
     def ejecutar(self, gh, tarea):
-        """Devuelve (estado, mensaje, error_mm) con estado en 'ok' | 'fallo' | 'cancelado'."""
+        """Devuelve (estado, mensaje, error_mm, tiempos) con estado en 'ok' | 'fallo' | 'cancelado'.
+        tiempos (P3): percepcion_s, ik_s, plan_s (del primer tramo hacia el bloque) y
+        t_inicio_movimiento (hora en que el brazo empieza a ir hacia el bloque)."""
         d = tarea.decision
         color = d['color']
         intento = datetime.datetime.now().strftime('%H%M%S')
@@ -296,13 +299,15 @@ class PickPlace:
                 'color': color, 'espera_cola_s': round(tarea.espera_s, 2), 'error_mm': -1}
         t_inicio = time.time()
         estado, mensaje, error_mm = 'fallo', '', -1.0
+        p3 = {}
         try:
             self._verificar_exclusividad()
             if d['accion'] in ('volver_inicio', 'detener'):
                 self._feedback(gh, 'HOME')
                 self.ir(self.puntos['home'], 'home', gh, t)
+                p3['t_inicio_movimiento'] = self._t_inicio_ejecucion
                 estado, mensaje = 'ok', 'brazo en HOME'
-                return estado, mensaje, error_mm
+                return estado, mensaje, error_mm, p3
 
             deposito = self.zona or f'deposito_{color}'      # se revisa ANTES de mover nada
             if deposito not in self.puntos:
@@ -355,7 +360,10 @@ class PickPlace:
 
             # 3-5. Plan + ejecución de cada tramo
             self._feedback(gh, 'AGARRE')
+            plan_antes = t['plan_s']
             self.ir(q_arriba, 'sobre el bloque', gh, t)
+            p3.update(percepcion_s=t['percepcion_s'], ik_s=t['ik_s'],
+                      plan_s=t['plan_s'] - plan_antes, t_inicio_movimiento=self._t_inicio_ejecucion)
             self.ir(q_agarre, 'agarre', gh, t)
             q_real = self.leer_angulos()
             p_pedida, p_real = fk.fk(q_agarre), fk.fk(q_real)
@@ -391,7 +399,9 @@ class PickPlace:
             fila.update({k: (round(v, 2) if isinstance(v, float) else v) for k, v in t.items()})
             fila.update(resultado=estado, detalle=mensaje, exito_visual='')
             self._registrar(fila)
-        return estado, mensaje, error_mm
+            p3.setdefault('percepcion_s', t['percepcion_s'])
+            p3.setdefault('ik_s', t['ik_s'])
+        return estado, mensaje, error_mm, p3
 
     def _a_salvo(self):
         """Ante un fallo: suelta lo que tenga y vuelve a HOME directo, despacio."""

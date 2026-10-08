@@ -4,10 +4,7 @@
 * Daniela Valeria Ricapa Adrian
 * Hugo Javier Barboza Hernandez
 * Cielo Camyla Valle Cristobal
-* Gabriel
 * Italo Alejandro Navarrete Pinedo
-* Nahim
-* Sebastián
 
 ## Arquitectura de Red
 * ROS_DOMAIN_ID=112
@@ -48,3 +45,7 @@ Write-Host "
 4. Ejecutar el transcriptor: ros2 run reto_final_nodos transcriptor_voz
 5. Ejecutar el intérprete: ros2 run reto_final_nodos interprete_ordenes --ros-args -p url_laya:="http://[IP_LAYA]:5000/predict"
 6. Ejecutar el brazo (worker): ros2 run arm_broker broker
+
+## Videos
+- P2 — Un pedido por integrante: <enlace>
+- P3 — Modo texto sin internet: <enlace>

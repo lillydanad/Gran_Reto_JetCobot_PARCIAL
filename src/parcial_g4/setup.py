@@ -20,6 +20,7 @@ setup(
         'console_scripts': [
             'interprete_ordenes = parcial_g4.interprete_ordenes:main',
             'cliente_orden = parcial_g4.cliente_orden:main',
+            'transcriptor_voz = parcial_g4.transcriptor_voz:main',
         ],
     },
 )

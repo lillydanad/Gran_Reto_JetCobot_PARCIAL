@@ -145,24 +145,27 @@ class ArmBroker(Node):
         self.get_logger().warn(f'[{usuario}] {causa}: decide el clasificador local')
         return d
 
-    def _rechazar(self, usuario, frase, motivo):
+    def _rechazar(self, usuario, frase, motivo, decision=None):
         with self.lock:
             self.n_rechazados += 1
-        self.pub_rechazos.publish(String(data=json.dumps(
-            {'t': time.time(), 'client_id': usuario, 'frase': frase, 'motivo': motivo},
-            ensure_ascii=False)))
+        datos = {'t': time.time(), 'client_id': usuario, 'frase': frase, 'motivo': motivo}
+        if decision:
+            datos['decision'] = {k: v for k, v in decision.items() if not k.startswith('_')}
+        self.pub_rechazos.publish(String(data=json.dumps(datos, ensure_ascii=False)))
         self.get_logger().warn(f'DENEGADO [{usuario}] "{frase}" -> {motivo}')
         return GoalResponse.REJECT
 
     def _goal_con_frase(self, goal_request, usuario):
         frase = goal_request.frase.strip()
+        t0 = time.time()
         d = self._interpretar(frase, usuario)
+        d['t_decision_s'] = time.time() - t0                  # P3: etapa "decisión del modelo"
         if d['motivo']:
-            return self._rechazar(usuario, frase, d['motivo'])
+            return self._rechazar(usuario, frase, d['motivo'], d)
         with self.lock:
             total_en_cola = len(self.pendientes)
         if total_en_cola >= self.cola_max:
-            return self._rechazar(usuario, frase, f'cola saturada ({total_en_cola}/{self.cola_max})')
+            return self._rechazar(usuario, frase, f'cola saturada ({total_en_cola}/{self.cola_max})', d)
         with self.lock:
             self.n_aceptados += 1
             self.decisiones[id(goal_request)] = d
@@ -181,8 +184,11 @@ class ArmBroker(Node):
         respuesta.degradada = bool(d['degradada'])
         respuesta.error_mm = -1.0
         t0 = time.time()
+        tiempos = {'decision_s': d.get('t_decision_s'), 'espera_cola_s': tarea.espera_s}
         if self.pp is not None:                              # modo real (Paso 8)
-            estado, mensaje, error_mm = self.pp.ejecutar(goal_handle, tarea)
+            estado, mensaje, error_mm, t_pp = self.pp.ejecutar(goal_handle, tarea)
+            tiempos.update(t_pp)
+            respuesta.tiempos_json = json.dumps(tiempos)
             if estado == 'ok':
                 goal_handle.succeed()
             elif estado == 'cancelado':
@@ -210,6 +216,8 @@ class ArmBroker(Node):
             time.sleep(retraso)
         goal_handle.succeed()
         respuesta.success = True
+        tiempos['t_inicio_movimiento'] = t0
+        respuesta.tiempos_json = json.dumps(tiempos)
         respuesta.message = 'simulado: el brazo no se movió'
         respuesta.wait_time_s = tarea.espera_s
         respuesta.exec_time_s = time.time() - t0
