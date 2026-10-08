@@ -1,0 +1,4 @@
+transcripcion: trae el bloque de color de Sonic el erizo
+modo: voz
+causa_modo_texto: 
+texto_enviado: trae el bloque de color de Sonic el erizo

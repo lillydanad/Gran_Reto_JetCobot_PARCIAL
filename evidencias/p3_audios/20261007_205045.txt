@@ -1,0 +1,4 @@
+transcripcion: agarra el bloque amarillo
+modo: voz
+causa_modo_texto: 
+texto_enviado: agarra el bloque amarillo

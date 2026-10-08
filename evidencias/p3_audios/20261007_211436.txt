@@ -1,0 +1,4 @@
+transcripcion: 
+modo: teclado (respaldo)
+causa_modo_texto: la transcripción vino vacía
+texto_enviado: q

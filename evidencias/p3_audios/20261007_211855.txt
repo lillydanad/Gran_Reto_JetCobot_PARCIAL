@@ -1,0 +1,4 @@
+transcripcion: Trae la pelota verde.
+modo: voz
+causa_modo_texto: 
+texto_enviado: Trae la pelota verde.

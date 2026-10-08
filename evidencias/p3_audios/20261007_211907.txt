@@ -1,0 +1,4 @@
+transcripcion: Lanza el bloque verde.
+modo: voz
+causa_modo_texto: 
+texto_enviado: Lanza el bloque verde.

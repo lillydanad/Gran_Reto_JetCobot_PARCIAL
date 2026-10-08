@@ -1,0 +1,4 @@
+transcripcion: Lleva el bloque azul ahí es urgente.
+modo: voz
+causa_modo_texto: 
+texto_enviado: Lleva el bloque azul ahí es urgente.

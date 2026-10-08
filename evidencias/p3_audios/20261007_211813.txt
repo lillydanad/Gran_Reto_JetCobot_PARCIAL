@@ -1,0 +1,4 @@
+transcripcion: Agárrame el bloque amarillo.
+modo: voz
+causa_modo_texto: 
+texto_enviado: Agárrame el bloque amarillo.

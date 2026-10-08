@@ -1,0 +1,4 @@
+transcripcion: Trae el bloque verde.
+modo: voz
+causa_modo_texto: 
+texto_enviado: Trae el bloque verde.

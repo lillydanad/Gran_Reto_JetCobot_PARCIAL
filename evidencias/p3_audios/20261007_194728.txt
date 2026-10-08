@@ -1,0 +1,4 @@
+transcripcion: Trae el color Pac-Man.
+modo: voz
+causa_modo_texto: 
+texto_enviado: Trae el color Pac-Man.

@@ -1,0 +1,4 @@
+transcripcion: trae bloque amarillo
+modo: voz
+causa_modo_texto: 
+texto_enviado: trae bloque amarillo

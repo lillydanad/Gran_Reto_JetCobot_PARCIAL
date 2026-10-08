@@ -1,0 +1,4 @@
+transcripcion: 
+modo: teclado (respaldo)
+causa_modo_texto: Google AI Studio respondió HTTP 404
+texto_enviado: er
