@@ -2,17 +2,17 @@ rosbag2_bagfile_information:
   version: 5
   storage_identifier: sqlite3
   duration:
-    nanoseconds: 863754148256
+    nanoseconds: 771544232640
   starting_time:
-    nanoseconds_since_epoch: 1791428139996244896
-  message_count: 5001
+    nanoseconds_since_epoch: 1792092967201759296
+  message_count: 5027
   topics_with_message_count:
     - topic_metadata:
         name: /joint_states
         type: sensor_msgs/msg/JointState
         serialization_format: cdr
         offered_qos_profiles: "- history: 3\n  depth: 0\n  reliability: 1\n  durability: 2\n  deadline:\n    sec: 9223372036\n    nsec: 854775807\n  lifespan:\n    sec: 9223372036\n    nsec: 854775807\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 9223372036\n    nsec: 854775807\n  avoid_ros_namespace_conventions: false"
-      message_count: 501
+      message_count: 984
     - topic_metadata:
         name: /arm/rechazos
         type: std_msgs/msg/String
@@ -24,13 +24,13 @@ rosbag2_bagfile_information:
         type: arm_broker_interfaces/msg/QueueState
         serialization_format: cdr
         offered_qos_profiles: "- history: 3\n  depth: 0\n  reliability: 1\n  durability: 2\n  deadline:\n    sec: 9223372036\n    nsec: 854775807\n  lifespan:\n    sec: 9223372036\n    nsec: 854775807\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 9223372036\n    nsec: 854775807\n  avoid_ros_namespace_conventions: false"
-      message_count: 4315
+      message_count: 3856
     - topic_metadata:
         name: /rosout
         type: rcl_interfaces/msg/Log
         serialization_format: cdr
         offered_qos_profiles: "- history: 3\n  depth: 0\n  reliability: 1\n  durability: 1\n  deadline:\n    sec: 9223372036\n    nsec: 854775807\n  lifespan:\n    sec: 10\n    nsec: 0\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 9223372036\n    nsec: 854775807\n  avoid_ros_namespace_conventions: false"
-      message_count: 183
+      message_count: 185
   compression_format: ""
   compression_mode: ""
   relative_file_paths:
@@ -38,7 +38,7 @@ rosbag2_bagfile_information:
   files:
     - path: bag_p2_0.db3
       starting_time:
-        nanoseconds_since_epoch: 1791428139996244896
+        nanoseconds_since_epoch: 1792092967201759296
       duration:
-        nanoseconds: 863754148256
-      message_count: 5001
+        nanoseconds: 771544232640
+      message_count: 5027

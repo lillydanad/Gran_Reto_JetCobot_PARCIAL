@@ -1,0 +1,2 @@
+fecha,client_id,frase,color,posicion,pixel,via,q_pedido_deg,q_real_deg,pos_pedida_mm,pos_alcanzada_mm,error_mm,espera_cola_s,percepcion_s,ik_s,plan_s,ejecucion_s,total_s,resultado,detalle,exito_visual
+2026-10-15T14:30:18,prueba,trae el bloque amarillo,amarillo,pos_verde,"[5, 50]",moveit,"[26.01, -40.95, -76.9, 29.44, 1.49, -16.52]","[25.57, -42.01, -78.22, 27.42, 2.1, -16.78]","[237.0, 46.5, 125.1]","[233.2, 43.3, 114.6]",11.64,0.0,9.79,0.03,0.26,38.03,47.55,ok,amarillo desde pos_verde a deposito_amarillo · error 11.6 mm,si

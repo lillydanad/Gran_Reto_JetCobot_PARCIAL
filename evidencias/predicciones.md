@@ -11,3 +11,5 @@
 2026-10-08 17:09 | 50 frases CARGA | PREDICCIÓN: servicio p95 ~50ms, degradadas ~90 %
 2026-10-08 17:19 | 50 frases CALMA | PREDICCIÓN: servicio mediana ~50 ms, p95 ~100ms; LAYA completa ~75%, palabras clave ~96%
 2026-10-08 17:20 | 50 frases CARGA | PREDICCIÓN: servicio p95 ~120 ms, degradadas ~70%
+2026-10-15 14:15 | P2 corrida oficial 2 (brazo alterno) | PREDICCIÓN: éxito ~__/10, error FK mediana ~__ mm, máximo ~__ mm
+2026-10-15 14:17 | P2 corrida oficial 2 (brazo alterno) | PREDICCIÓN: éxito ~10/10, error FK mediana ~5 mm, máximo ~5 mm
